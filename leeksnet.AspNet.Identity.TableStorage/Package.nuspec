@@ -5,7 +5,7 @@
     <version>0.0.8</version>
     <authors>stuartleeks</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>This package makes it easy to get started with the Visual Studio 2013 web tempaltes using ASP.NET Identity with Windows Azure Table Storage</description>
+    <description>This package makes it easy to get started with the Visual Studio 2013 web templates using ASP.NET Identity with Windows Azure Table Storage</description>
     <projectUrl>https://github.com/stuartleeks/leeksnet.AspNet.Identity.TableStorage</projectUrl>
     <licenseUrl>https://github.com/stuartleeks/leeksnet.AspNet.Identity.TableStorage/blob/master/README.md</licenseUrl>
     <dependencies>

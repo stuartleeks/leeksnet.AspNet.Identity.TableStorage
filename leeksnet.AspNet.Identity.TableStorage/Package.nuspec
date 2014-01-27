@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>leeksnet.AspNet.Identity.TableStorage</id>
-    <version>0.0.4</version>
+    <version>0.0.8</version>
     <authors>stuartleeks</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>This package makes it easy to get started with the Visual Studio 2013 web tempaltes using ASP.NET Identity with Windows Azure Table Storage</description>
@@ -10,7 +10,7 @@
     <licenseUrl>https://github.com/stuartleeks/leeksnet.AspNet.Identity.TableStorage/blob/master/README.md</licenseUrl>
     <dependencies>
       <dependency id="Microsoft.AspNet.Identity.Core" version="1.0.0"/>
-      <dependency id="WindowsAzure.Storage" version="3.0.2.0"/>
+      <dependency id="WindowsAzure.Storage" version="2.1.0.0"/>
     </dependencies>
   </metadata>
   <files>

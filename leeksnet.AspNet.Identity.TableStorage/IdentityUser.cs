@@ -47,6 +47,32 @@ namespace leeksnet.AspNet.Identity.TableStorage
             }
             set { _logins = value; }
         }
+
+        public string SerializedRoles // Simple way to keep roles in the same table :-)
+        {
+            get
+            {
+                if (_roles == null || _roles.Count == 0)
+                    return null;
+                return JsonConvert.SerializeObject(Roles);
+            }
+            set
+            {
+                _roles = JsonConvert.DeserializeObject<IList<string>>(value) ?? new List<string>();
+            }
+        }
+
+        private IList<string> _roles;
+        [IgnoreProperty]
+        public IList<string> Roles
+        {
+            get
+            {
+                _roles = _roles ?? new List<string>();
+                return _roles;
+            }
+            set { _roles = value; }
+        }
     }
 
 }

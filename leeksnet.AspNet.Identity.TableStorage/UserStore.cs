@@ -12,7 +12,8 @@ namespace leeksnet.AspNet.Identity.TableStorage
     public class UserStore<TUser> :
         IUserStore<TUser>,
         IUserPasswordStore<TUser>,
-        IUserLoginStore<TUser>
+        IUserLoginStore<TUser>,
+        IUserRoleStore<TUser> 
         where TUser : IdentityUser
     {
         private readonly Func<string, string> _partitionKeyFromId;
@@ -61,8 +62,7 @@ namespace leeksnet.AspNet.Identity.TableStorage
         {
             var partitionKey = _partitionKeyFromId(user.Id);
             user.PartitionKey = partitionKey;
-            var operation = TableOperation.Replace(user);
-            await GetUserTable().ExecuteAsync(operation);
+            await UpdateUser(user);
         }
 
         public async Task DeleteAsync(TUser user)
@@ -104,6 +104,7 @@ namespace leeksnet.AspNet.Identity.TableStorage
         public async Task AddLoginAsync(TUser user, UserLoginInfo login)
         {
             user.Logins.Add(login);
+            await UpdateUser(user);
 
             var operation = TableOperation.Insert(new LoginInfoEntity(login, user.Id));
             await GetLoginTable().ExecuteAsync(operation);
@@ -112,8 +113,9 @@ namespace leeksnet.AspNet.Identity.TableStorage
         public async Task RemoveLoginAsync(TUser user, UserLoginInfo login)
         {
             user.Logins.Remove(login);
-
-            var operation = TableOperation.Delete(new LoginInfoEntity(login, user.Id) { ETag = "*" });
+            await UpdateUser(user);
+            
+            var operation = TableOperation.Delete(new LoginInfoEntity(login, user.Id) {ETag = "*"});
             await GetLoginTable().ExecuteAsync(operation);
         }
 
@@ -131,6 +133,40 @@ namespace leeksnet.AspNet.Identity.TableStorage
             if (loginInfoEntity == null)
                 return null;
             return await FindByIdAsync(loginInfoEntity.UserId);
+        }
+
+        public async Task AddToRoleAsync(TUser user, string role)
+        {
+            if (!user.Roles.Contains(role))
+            {
+                user.Roles.Add(role);
+                await UpdateUser(user);
+            }
+        }
+
+        public async Task RemoveFromRoleAsync(TUser user, string role)
+        {
+            if (user.Roles.Remove(role))
+            {
+                await UpdateUser(user);
+            }
+        }
+
+        public Task<IList<string>> GetRolesAsync(TUser user)
+        {
+            return Task.FromResult(user.Roles);
+        }
+
+        public Task<bool> IsInRoleAsync(TUser user, string role)
+        {
+            return Task.FromResult(user.Roles.Contains(role));
+        }
+
+
+        private async Task UpdateUser(TUser user)
+        {
+            var operation = TableOperation.Replace(user);
+            await GetUserTable().ExecuteAsync(operation);
         }
     }
 }

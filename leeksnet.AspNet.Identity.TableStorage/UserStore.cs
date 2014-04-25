@@ -13,12 +13,14 @@ namespace leeksnet.AspNet.Identity.TableStorage
         IUserStore<TUser>,
         IUserPasswordStore<TUser>,
         IUserLoginStore<TUser>,
-        IUserRoleStore<TUser> 
+        IUserRoleStore<TUser>,
+        IUserEmailStore<TUser>
         where TUser : IdentityUser
     {
         private readonly Func<string, string> _partitionKeyFromId;
         private readonly CloudTable _userTableReference;
         private readonly CloudTable _loginTableReference;
+        private readonly CloudTable _emailTableReference;
 
         /// <summary>
         /// 
@@ -34,6 +36,9 @@ namespace leeksnet.AspNet.Identity.TableStorage
 
             _loginTableReference = tableClient.GetTableReference("Logins");
             _loginTableReference.CreateIfNotExists();
+
+            _emailTableReference = tableClient.GetTableReference("Email");
+            _emailTableReference.CreateIfNotExists();
         }
 
         private CloudTable GetUserTable()
@@ -44,6 +49,10 @@ namespace leeksnet.AspNet.Identity.TableStorage
         private CloudTable GetLoginTable()
         {
             return _loginTableReference;
+        }
+        private CloudTable GetEmailTable()
+        {
+            return _emailTableReference;
         }
 
         public void Dispose()
@@ -56,6 +65,14 @@ namespace leeksnet.AspNet.Identity.TableStorage
             user.PartitionKey = partitionKey;
             var operation = TableOperation.Insert(user);
             await GetUserTable().ExecuteAsync(operation);
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                await SaveUserEmailMappingAsync(user.Id, user.Email);
+            }
+            foreach (var userLoginInfo in user.Logins)
+            {
+                await AddLoginAsync(user, userLoginInfo);
+            }
         }
 
         public async Task UpdateAsync(TUser user)
@@ -67,6 +84,14 @@ namespace leeksnet.AspNet.Identity.TableStorage
 
         public async Task DeleteAsync(TUser user)
         {
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                await DeleteUserEmailMappingAsync(user.Id, user.Email);
+            }
+            foreach (var userLoginInfo in user.Logins)
+            {
+                await RemoveLoginAsync(user, userLoginInfo);
+            }
             user.ETag = "*";
             var operation = TableOperation.Delete(user);
             await GetUserTable().ExecuteAsync(operation);
@@ -112,10 +137,14 @@ namespace leeksnet.AspNet.Identity.TableStorage
 
         public async Task RemoveLoginAsync(TUser user, UserLoginInfo login)
         {
-            user.Logins.Remove(login);
-            await UpdateUser(user);
-            
-            var operation = TableOperation.Delete(new LoginInfoEntity(login, user.Id) {ETag = "*"});
+            var userLogin = user.Logins.FirstOrDefault(l => l.ProviderKey == login.ProviderKey && l.LoginProvider == login.LoginProvider);
+            if (userLogin != null)
+            {
+                user.Logins.Remove(userLogin);
+                await UpdateUser(user);
+            }
+
+            var operation = TableOperation.Delete(new LoginInfoEntity(login, user.Id) { ETag = "*" });
             await GetLoginTable().ExecuteAsync(operation);
         }
 
@@ -167,6 +196,67 @@ namespace leeksnet.AspNet.Identity.TableStorage
         {
             var operation = TableOperation.Replace(user);
             await GetUserTable().ExecuteAsync(operation);
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                await SaveUserEmailMappingAsync(user.Id, user.Email);
+            }
+        }
+
+        public async Task SetEmailAsync(TUser user, string email)
+        {
+            var userOriginal = await FindByIdAsync(user.Id);
+            if (!string.IsNullOrEmpty(userOriginal.Email))
+            {
+                // clear old mapping
+                await DeleteUserEmailMappingAsync(user.Id, userOriginal.Email);
+            }
+            await UpdateUser(user); // saves email mapping :-)
+
+        }
+
+        private async Task DeleteUserEmailMappingAsync(string userId, string email)
+        {
+            var partitionKey = _partitionKeyFromId(email);
+            var operationDeleteOldEmail =
+                TableOperation.Delete(new EmailToUserEntity(partitionKey, userId, email) { ETag = "*" });
+            await GetLoginTable().ExecuteAsync(operationDeleteOldEmail);
+        }
+
+        private async Task SaveUserEmailMappingAsync(string userId, string email)
+        {
+            var partitionKeyNewEmail = _partitionKeyFromId(email);
+            var operationAddNewEmail = TableOperation.Insert(new EmailToUserEntity(partitionKeyNewEmail, userId, email));
+            await GetEmailTable().ExecuteAsync(operationAddNewEmail);
+        }
+
+        public Task<string> GetEmailAsync(TUser user)
+        {
+            return Task.FromResult(user.Email);
+        }
+
+        public Task<bool> GetEmailConfirmedAsync(TUser user)
+        {
+            return Task.FromResult(user.EmailConfirmed);
+        }
+
+        public async Task SetEmailConfirmedAsync(TUser user, bool confirmed)
+        {
+            user.EmailConfirmed = confirmed;
+            await UpdateAsync(user);
+        }
+
+        public async Task<TUser> FindByEmailAsync(string email)
+        {
+            var partitionKey = _partitionKeyFromId(email);
+            var operation = TableOperation.Retrieve<EmailToUserEntity>(partitionKey, email);
+            TableResult result = await GetEmailTable().ExecuteAsync(operation);
+            var emailMapping = (EmailToUserEntity)result.Result;
+            if (emailMapping == null)
+            {
+                return null;
+            }
+            var user = await FindByIdAsync(emailMapping.UserId);
+            return user;
         }
     }
 }

@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>leeksnet.AspNet.Identity.TableStorage</id>
-    <version>0.0.8</version>
+    <version>2.0.0-alpha3</version>
     <authors>stuartleeks</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>This package makes it easy to get started with the Visual Studio 2013 web templates using ASP.NET Identity with Windows Azure Table Storage</description>
     <projectUrl>https://github.com/stuartleeks/leeksnet.AspNet.Identity.TableStorage</projectUrl>
     <licenseUrl>https://github.com/stuartleeks/leeksnet.AspNet.Identity.TableStorage/blob/master/README.md</licenseUrl>
     <dependencies>
-      <dependency id="Microsoft.AspNet.Identity.Core" version="1.0.0"/>
+      <dependency id="Microsoft.AspNet.Identity.Core" version="2.0.0"/>
       <dependency id="WindowsAzure.Storage" version="2.1.0.0"/>
     </dependencies>
   </metadata>

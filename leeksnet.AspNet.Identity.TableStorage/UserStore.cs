@@ -36,6 +36,15 @@ namespace leeksnet.AspNet.Identity.TableStorage
             _loginTableReference.CreateIfNotExists();
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
         private CloudTable GetUserTable()
         {
             return _userTableReference;
@@ -44,10 +53,6 @@ namespace leeksnet.AspNet.Identity.TableStorage
         private CloudTable GetLoginTable()
         {
             return _loginTableReference;
-        }
-
-        public void Dispose()
-        {
         }
 
         public async Task CreateAsync(TUser user)

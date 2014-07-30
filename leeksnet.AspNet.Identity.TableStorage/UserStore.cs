@@ -45,12 +45,12 @@ namespace leeksnet.AspNet.Identity.TableStorage
             Dispose(true);
         }
 
-        private CloudTable GetUserTable()
+        protected CloudTable GetUserTable()
         {
             return _userTableReference;
         }
 
-        private CloudTable GetLoginTable()
+        protected CloudTable GetLoginTable()
         {
             return _loginTableReference;
         }
@@ -68,6 +68,12 @@ namespace leeksnet.AspNet.Identity.TableStorage
             var partitionKey = _partitionKeyFromId(user.Id);
             user.PartitionKey = partitionKey;
             await UpdateUser(user);
+        }
+
+        protected async Task UpdateUser(TUser user)
+        {
+            var operation = TableOperation.Replace(user);
+            await GetUserTable().ExecuteAsync(operation);
         }
 
         public async Task DeleteAsync(TUser user)
@@ -167,11 +173,5 @@ namespace leeksnet.AspNet.Identity.TableStorage
             return Task.FromResult(user.Roles.Contains(role));
         }
 
-
-        private async Task UpdateUser(TUser user)
-        {
-            var operation = TableOperation.Replace(user);
-            await GetUserTable().ExecuteAsync(operation);
-        }
     }
 }

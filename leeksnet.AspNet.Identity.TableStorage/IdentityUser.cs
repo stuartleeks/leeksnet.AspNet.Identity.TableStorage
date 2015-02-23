@@ -1,13 +1,7 @@
-﻿using System.Web;
+﻿using System.Collections.Generic;
 using Microsoft.AspNet.Identity;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
 
 namespace leeksnet.AspNet.Identity.TableStorage
 {
